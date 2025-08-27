@@ -12,23 +12,27 @@ export class ColumnsService {
       data: {
         title: createColumnDto.title,
         order: createColumnDto.order,
-        board: createColumnDto.boardId ? {
-          connect: { id: createColumnDto.boardId }
-        } : undefined
       },
     });
   }
 
-  async findAll(boardId: string) {
-    return this.prisma.column.findMany({
-      where: { boardId },
-      include: {
-        cards: {
-          orderBy: { order: 'asc' }
-        }
-      },
+  async findAll() {
+    const columns = await this.prisma.column.findMany({
       orderBy: { order: 'asc' }
     });
+
+    // Obtener las tarjetas para cada columna
+    const columnsWithCards = await Promise.all(
+      columns.map(async (column) => {
+        const cards = await this.prisma.card.findMany({
+          where: { columnId: column.id },
+          orderBy: { order: 'asc' }
+        });
+        return { ...column, cards };
+      })
+    );
+
+    return columnsWithCards;
   }
 
   async update(id: string, updateColumnDto: UpdateColumnDto) {
@@ -37,26 +41,29 @@ export class ColumnsService {
       data: {
         title: updateColumnDto.title,
         order: updateColumnDto.order,
-        board: updateColumnDto.boardId ? {
-          connect: { id: updateColumnDto.boardId }
-        } : undefined
       },
     });
   }
 
   async remove(id: string) {
+    // Primero eliminar todas las tarjetas de la columna
+    await this.prisma.card.deleteMany({
+      where: { columnId: id }
+    });
+
     return this.prisma.column.delete({
       where: { id },
     });
   }
 
   async reorder(columns: { id: string; order: number }[]) {
-    const updates = columns.map(({ id, order }) =>
-      this.prisma.column.update({
+    // Actualizar el orden de una en una para evitar transacciones
+    for (const { id, order } of columns) {
+      await this.prisma.column.update({
         where: { id },
         data: { order },
-      })
-    );
-    return this.prisma.$transaction(updates);
+      });
+    }
+    return this.findAll();
   }
 }

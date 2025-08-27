@@ -20,10 +20,10 @@ model Column {
 }
 
 model Card {
-  id       String  @id @map("_id") @default(auto()) @db.ObjectId
+  id       String @id @map("_id") @default(auto()) @db.ObjectId
   title    String
   content  String?
   order    Int
-  columnId String  @db.ObjectId
-  userId   String  @db.ObjectId
+  columnId String @db.ObjectId  // Campo requerido
+  userId   String @db.ObjectId  // Campo requerido
 }

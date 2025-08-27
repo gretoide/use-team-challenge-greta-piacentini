@@ -90,36 +90,6 @@ export class UsersGateway {
     }
   }
 
-  @SubscribeMessage('addUserToBoard')
-  async handleAddUserToBoard(
-    @MessageBody() data: { userId: string; boardId: string },
-    @ConnectedSocket() client: Socket,
-  ) {
-    try {
-      const boardUser = await this.usersService.addToBoard(data.userId, data.boardId);
-      this.server.emit('userAddedToBoard', boardUser);
-      return { success: true, data: boardUser };
-    } catch (error) {
-      client.emit('error', { message: 'Error al añadir usuario al tablero' });
-      return { success: false, error: error.message };
-    }
-  }
-
-  @SubscribeMessage('removeUserFromBoard')
-  async handleRemoveUserFromBoard(
-    @MessageBody() data: { userId: string; boardId: string },
-    @ConnectedSocket() client: Socket,
-  ) {
-    try {
-      await this.usersService.removeFromBoard(data.userId, data.boardId);
-      this.server.emit('userRemovedFromBoard', data);
-      return { success: true };
-    } catch (error) {
-      client.emit('error', { message: 'Error al remover usuario del tablero' });
-      return { success: false, error: error.message };
-    }
-  }
-
   @SubscribeMessage('getUsers')
   async handleGetUsers(@ConnectedSocket() client: Socket) {
     try {

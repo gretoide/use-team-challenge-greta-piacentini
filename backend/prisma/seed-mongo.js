@@ -8,6 +8,11 @@ async function main() {
     await client.connect();
     const db = client.db();
 
+    // Limpiar colecciones existentes
+    await db.collection('User').deleteMany({});
+    await db.collection('Column').deleteMany({});
+    await db.collection('Card').deleteMany({});
+
     // Crear usuarios
     const user1 = {
       _id: new ObjectId(),
@@ -61,6 +66,14 @@ async function main() {
         order: 1,
         columnId: todoColumn._id.toString(),
         userId: user2._id.toString()
+      },
+      {
+        _id: new ObjectId(),
+        title: 'Tarea en progreso',
+        content: 'Esta tarea está en desarrollo',
+        order: 0,
+        columnId: inProgressColumn._id.toString(),
+        userId: user1._id.toString()
       }
     ];
 

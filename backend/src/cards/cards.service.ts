@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCardDto } from './dto/create-card.dto';
 import { UpdateCardDto } from './dto/update-card.dto';
+import { Card } from '@prisma/client';
+
 
 @Injectable()
 export class CardsService {
@@ -11,50 +13,39 @@ export class CardsService {
     return this.prisma.card.create({
       data: {
         title: createCardDto.title,
-        content: createCardDto.content,
+        content: createCardDto.content || '',
         order: createCardDto.order,
-        column: {
-          connect: { id: createCardDto.columnId }
-        },
-        user: createCardDto.userId ? {
-          connect: { id: createCardDto.userId }
-        } : undefined
+        columnId: createCardDto.columnId,
+        userId: createCardDto.userId,
       },
-      include: {
-        user: true,
-        column: true
-      }
     });
   }
 
   async findAll(columnId: string) {
     return this.prisma.card.findMany({
       where: { columnId },
-      include: {
-        user: true
-      },
       orderBy: { order: 'asc' }
     });
   }
 
+  async findOne(id: string) {
+    return this.prisma.card.findUnique({
+      where: { id }
+    });
+  }
+
   async update(id: string, updateCardDto: UpdateCardDto) {
+    const updateData: any = {};
+    
+    if (updateCardDto.title !== undefined) updateData.title = updateCardDto.title;
+    if (updateCardDto.content !== undefined) updateData.content = updateCardDto.content;
+    if (updateCardDto.order !== undefined) updateData.order = updateCardDto.order;
+    if (updateCardDto.columnId !== undefined) updateData.columnId = updateCardDto.columnId;
+    if (updateCardDto.userId !== undefined) updateData.userId = updateCardDto.userId;
+
     return this.prisma.card.update({
       where: { id },
-      data: {
-        title: updateCardDto.title,
-        content: updateCardDto.content,
-        order: updateCardDto.order,
-        column: updateCardDto.columnId ? {
-          connect: { id: updateCardDto.columnId }
-        } : undefined,
-        user: updateCardDto.userId ? {
-          connect: { id: updateCardDto.userId }
-        } : undefined
-      },
-      include: {
-        user: true,
-        column: true
-      }
+      data: updateData,
     });
   }
 
@@ -68,29 +59,21 @@ export class CardsService {
     return this.prisma.card.update({
       where: { id },
       data: {
-        column: {
-          connect: { id: columnId }
-        },
+        columnId,
         order
       },
-      include: {
-        user: true,
-        column: true
-      }
     });
   }
 
   async reorderCards(cards: { id: string; order: number }[]) {
-    const updates = cards.map(({ id, order }) =>
-      this.prisma.card.update({
+    const results: Card[] = [];
+    for (const { id, order } of cards) {
+      const result = await this.prisma.card.update({
         where: { id },
         data: { order },
-        include: {
-          user: true,
-          column: true
-        }
-      })
-    );
-    return this.prisma.$transaction(updates);
+      });
+      results.push(result);
+    }
+    return results;
   }
 }

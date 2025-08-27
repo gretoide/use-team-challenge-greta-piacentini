@@ -78,11 +78,10 @@ export class ColumnsGateway {
 
   @SubscribeMessage('getColumns')
   async handleGetColumns(
-    @MessageBody() boardId: string,
     @ConnectedSocket() client: Socket,
   ) {
     try {
-      const columns = await this.columnsService.findAll(boardId);
+      const columns = await this.columnsService.findAll();
       return { success: true, data: columns };
     } catch (error) {
       client.emit('error', { message: 'Error al obtener las columnas' });

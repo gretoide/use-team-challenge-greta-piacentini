@@ -3,5 +3,5 @@ export class CreateCardDto {
   content?: string;
   order: number;
   columnId: string;
-  userId?: string;
+  userId: string;  // Ahora es requerido
 }

@@ -10,101 +10,40 @@ export class UsersService {
   async create(createUserDto: CreateUserDto) {
     return this.prisma.user.create({
       data: createUserDto,
-      include: {
-        cards: true,
-        boardUsers: {
-          include: {
-            board: true
-          }
-        }
-      }
     });
   }
 
   async findAll() {
-    return this.prisma.user.findMany({
-      include: {
-        boardUsers: {
-          include: {
-            board: true
-          }
-        }
-      }
-    });
+    return this.prisma.user.findMany();
   }
 
   async findOne(id: string) {
     return this.prisma.user.findUnique({
       where: { id },
-      include: {
-        cards: true,
-        boardUsers: {
-          include: {
-            board: true
-          }
-        }
-      }
     });
   }
 
   async findByEmail(email: string) {
     return this.prisma.user.findUnique({
       where: { email },
-      include: {
-        boardUsers: {
-          include: {
-            board: true
-          }
-        }
-      }
     });
   }
 
   async update(id: string, updateUserDto: UpdateUserDto) {
+    const updateData: any = {};
+    
+    if (updateUserDto.name !== undefined) updateData.name = updateUserDto.name;
+    if (updateUserDto.email !== undefined) updateData.email = updateUserDto.email;
+
     return this.prisma.user.update({
       where: { id },
-      data: {
-        name: updateUserDto.name,
-        email: updateUserDto.email
-      },
-      include: {
-        cards: true,
-        boardUsers: {
-          include: {
-            board: true
-          }
-        }
-      }
+      data: updateData,
     });
   }
 
   async remove(id: string) {
     return this.prisma.user.delete({
       where: { id }
-    });
-  }
-
-  async addToBoard(userId: string, boardId: string) {
-    return this.prisma.boardUser.create({
-      data: {
-        user: { connect: { id: userId } },
-        board: { connect: { id: boardId } }
-      },
-      include: {
-        user: true,
-        board: true
-      }
-    });
-  }
-
-  async removeFromBoard(userId: string, boardId: string) {
-    return this.prisma.boardUser.delete({
-      where: {
-        userId_boardId: {
-          userId,
-          boardId
-        }
-      }
     });
   }
 }
