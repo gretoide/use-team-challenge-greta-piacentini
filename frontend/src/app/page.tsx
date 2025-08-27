@@ -1,103 +1,102 @@
-import Image from "next/image";
+'use client';
+
+import {
+  DndContext,
+  DragEndEvent,
+  DragOverEvent,
+  closestCorners,
+} from '@dnd-kit/core';
+import { arrayMove } from '@dnd-kit/sortable';
+import { useEffect } from 'react';
+import { io } from "socket.io-client";
+import { Toaster, toast } from 'sonner';
+import { useStore } from '../store/useStore';
+import { Column } from '../components/Column';
+import { UserSwitch } from '../components/UserSwitch';
+
+const socket = io('http://localhost:3000');
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const { columns, setColumns, users, setUsers, moveCard } = useStore();
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+  useEffect(() => {
+    // Cargar usuarios
+    socket.emit('getUsers', {}, (response: any) => {
+      if (response.success) {
+        setUsers(response.data);
+      }
+    });
+
+    // Cargar columnas y tarjetas
+    socket.emit('getColumns', {}, (response: any) => {
+      if (response.success) {
+        setColumns(response.data);
+      }
+    });
+
+    // Escuchar eventos de WebSocket
+    socket.on('cardMoved', (data) => {
+      toast('Tarjeta movida');
+      moveCard(data.id, data.sourceColumnId, data.targetColumnId, data.order);
+    });
+
+    return () => {
+      socket.off('cardMoved');
+    };
+  }, []);
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (!over) return;
+
+    const activeId = active.id;
+    const overId = over.id;
+
+    if (activeId === overId) return;
+
+    const activeColumnId = columns.find(col => 
+      col.cards.some(card => card.id === activeId)
+    )?.id;
+
+    const overColumnId = columns.find(col => 
+      col.cards.some(card => card.id === overId)
+    )?.id;
+
+    if (!activeColumnId || !overColumnId) return;
+
+    socket.emit('moveCard', {
+      id: activeId.toString(),
+      columnId: overColumnId,
+      order: columns.find(col => col.id === overColumnId)
+        ?.cards.findIndex(card => card.id === overId) ?? 0,
+    });
+  };
+
+  return (
+    <main className="container-fluid py-4">
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h1>Tablero Kanban</h1>
+        <UserSwitch />
+      </div>
+      
+      <DndContext
+        onDragEnd={handleDragEnd}
+        collisionDetection={closestCorners}
+      >
+        <div className="row row-cols-1 row-cols-md-3 g-4">
+          {columns.map((column) => (
+            <Column
+              key={column.id}
+              id={column.id}
+              title={column.title}
+              cards={column.cards}
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+          ))}
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+      </DndContext>
+      
+      <Toaster position="top-right" />
+    </main>
   );
 }
