@@ -21,38 +21,31 @@ export class ColumnsService {
       orderBy: { order: 'asc' }
     });
 
-    console.log('🔍 IDs de columnas:', columns.map(c => c.id));
-
     // Obtener TODAS las tarjetas primero
     const allCards = await this.prisma.card.findMany({
       orderBy: { order: 'asc' }
     });
 
-    console.log('🃏 Todas las tarjetas:', allCards.map(card => ({
-      id: card.id,
-      title: card.title,
-      columnId: card.columnId
-    })));
+    // Obtener todos los usuarios
+    const allUsers = await this.prisma.user.findMany();
 
-    // Agrupar tarjetas por columna
+    // Agrupar tarjetas por columna con información de usuarios
     const columnsWithCards = columns.map(column => {
-      const cards = allCards.filter(card => card.columnId === column.id);
-      
-      console.log(`🔍 Tarjetas para columna ${column.title} (${column.id}):`, 
-        cards.map(card => ({
-          id: card.id, 
-          title: card.title, 
-          columnId: card.columnId
-        }))
-      );
+      const cards = allCards
+        .filter(card => card.columnId === column.id)
+        .map(card => {
+          const user = allUsers.find(u => u.id === card.userId);
+          return {
+            ...card,
+            userName: user ? user.name : 'Usuario desconocido'
+          };
+        });
 
       return { 
         ...column, 
         cards 
       };
     });
-
-    console.log('🔍 Columnas con tarjetas:', JSON.stringify(columnsWithCards, null, 2));
 
     return columnsWithCards;
   }

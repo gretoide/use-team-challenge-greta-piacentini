@@ -81,13 +81,9 @@ export class ColumnsGateway {
     @ConnectedSocket() client: Socket,
   ) {
     try {
-      console.log('🔍 Solicitando columnas...');
       const columns = await this.columnsService.findAll();
-      console.log('📋 Columnas encontradas:', columns.length);
-      console.log('📋 Datos:', JSON.stringify(columns, null, 2));
       return { success: true, data: columns };
     } catch (error) {
-      console.error('❌ Error al obtener columnas:', error);
       client.emit('error', { message: 'Error al obtener las columnas' });
       return { success: false, error: error.message };
     }
