@@ -21,16 +21,38 @@ export class ColumnsService {
       orderBy: { order: 'asc' }
     });
 
-    // Obtener las tarjetas para cada columna
-    const columnsWithCards = await Promise.all(
-      columns.map(async (column) => {
-        const cards = await this.prisma.card.findMany({
-          where: { columnId: column.id },
-          orderBy: { order: 'asc' }
-        });
-        return { ...column, cards };
-      })
-    );
+    console.log('🔍 IDs de columnas:', columns.map(c => c.id));
+
+    // Obtener TODAS las tarjetas primero
+    const allCards = await this.prisma.card.findMany({
+      orderBy: { order: 'asc' }
+    });
+
+    console.log('🃏 Todas las tarjetas:', allCards.map(card => ({
+      id: card.id,
+      title: card.title,
+      columnId: card.columnId
+    })));
+
+    // Agrupar tarjetas por columna
+    const columnsWithCards = columns.map(column => {
+      const cards = allCards.filter(card => card.columnId === column.id);
+      
+      console.log(`🔍 Tarjetas para columna ${column.title} (${column.id}):`, 
+        cards.map(card => ({
+          id: card.id, 
+          title: card.title, 
+          columnId: card.columnId
+        }))
+      );
+
+      return { 
+        ...column, 
+        cards 
+      };
+    });
+
+    console.log('🔍 Columnas con tarjetas:', JSON.stringify(columnsWithCards, null, 2));
 
     return columnsWithCards;
   }
@@ -51,6 +73,7 @@ export class ColumnsService {
       where: { columnId: id }
     });
 
+    // Luego eliminar la columna
     return this.prisma.column.delete({
       where: { id },
     });

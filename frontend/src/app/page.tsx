@@ -18,6 +18,11 @@ const socket = io('http://localhost:3000');
 
 export default function Home() {
   const { columns, setColumns, users, setUsers, moveCard } = useStore();
+  
+  console.log('🏠 Estado actual del store:', { 
+    columnsCount: columns?.length || 0,
+    columns 
+  });
 
   useEffect(() => {
     // Cargar usuarios
@@ -76,7 +81,7 @@ export default function Home() {
   return (
     <main className="container-fluid py-4">
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h1>Tablero Kanban</h1>
+        <h1>My G.Kanban</h1>
         <UserSwitch />
       </div>
       
