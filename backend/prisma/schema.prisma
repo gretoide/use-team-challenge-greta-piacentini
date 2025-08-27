@@ -1,0 +1,55 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         String      @id @map("_id") @default(auto()) @db.ObjectId
+  name       String
+  email      String      @unique
+  cards      Card[]
+  boardUsers BoardUser[] // Relación explícita many-to-many
+}
+
+model Board {
+  id         String      @id @map("_id") @default(auto()) @db.ObjectId
+  name       String
+  columns    Column[]
+  boardUsers BoardUser[] // Relación explícita many-to-many
+}
+
+// Tabla intermedia para la relación many-to-many entre User y Board
+model BoardUser {
+  id      String @id @map("_id") @default(auto()) @db.ObjectId
+  userId  String @db.ObjectId
+  boardId String @db.ObjectId
+  
+  user    User   @relation(fields: [userId], references: [id])
+  board   Board  @relation(fields: [boardId], references: [id])
+  
+  @@unique([userId, boardId]) // Evita duplicados
+}
+
+model Column {
+  id      String  @id @map("_id") @default(auto()) @db.ObjectId
+  title   String
+  order   Int
+  cards   Card[]
+  boardId String? @db.ObjectId
+  board   Board?  @relation(fields: [boardId], references: [id])
+}
+
+model Card {
+  id       String  @id @map("_id") @default(auto()) @db.ObjectId
+  title    String
+  content  String?
+  order    Int
+  userId   String? @db.ObjectId
+  user     User?   @relation(fields: [userId], references: [id])
+  columnId String? @db.ObjectId
+  column   Column? @relation(fields: [columnId], references: [id])
+}
