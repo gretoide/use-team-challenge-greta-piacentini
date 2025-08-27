@@ -12,13 +12,9 @@ interface ColumnProps {
 }
 
 export const Column = ({ id, title, cards }: ColumnProps) => {
-  const { setNodeRef } = useDroppable({ id });
+  const { setNodeRef, isOver } = useDroppable({ id });
 
-  console.log(`📂 Columna "${title}":`, {
-    id,
-    cardsCount: cards?.length || 0,
-    cards: cards
-  });
+
 
   return (
     <div className="col">
@@ -28,26 +24,26 @@ export const Column = ({ id, title, cards }: ColumnProps) => {
         </div>
         <div
           ref={setNodeRef}
-          className="card-body"
-          style={{ minHeight: '500px' }}
+          className={`card-body ${isOver ? 'bg-light border-2 border-primary' : ''}`}
+          style={{ 
+            minHeight: '500px',
+            transition: 'all 0.2s ease',
+          }}
         >
           <SortableContext
             items={cards.map(card => card.id)}
             strategy={verticalListSortingStrategy}
           >
             {cards && cards.length > 0 ? (
-              cards.map((card) => {
-                console.log(`🃏 Renderizando tarjeta:`, card);
-                return (
-                  <Card
-                    key={card.id}
-                    id={card.id}
-                    title={card.title}
-                    content={card.content}
-                    userId={card.userId}
-                  />
-                );
-              })
+              cards.map((card) => (
+                <Card
+                  key={card.id}
+                  id={card.id}
+                  title={card.title}
+                  content={card.content}
+                  userId={card.userId}
+                />
+              ))
             ) : (
               <div className="text-muted">No hay tarjetas</div>
             )}

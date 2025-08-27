@@ -63,31 +63,78 @@ export class CardsGateway {
 
   @SubscribeMessage('moveCard')
   async handleMoveCard(
-    @MessageBody() data: { id: string; columnId: string; order: number },
+    @MessageBody() data: { 
+      id: string; 
+      columnId: string; 
+      order: number 
+    },
     @ConnectedSocket() client: Socket,
   ) {
     try {
-      const card = await this.cardsService.moveCard(data.id, data.columnId, data.order);
-      this.server.emit('cardMoved', card);
-      return { success: true, data: card };
+      // Mover la tarjeta a la nueva columna
+      const movedCard = await this.cardsService.moveCard(
+        data.id, 
+        data.columnId, 
+        data.order
+      );
+
+      // Emitir evento a todos los clientes (el frontend ya manejará el estado)
+      this.server.emit('cardMoved', {
+        id: data.id,
+        columnId: data.columnId,
+        order: data.order
+      });
+
+      return { 
+        success: true, 
+        data: movedCard 
+      };
     } catch (error) {
-      client.emit('error', { message: 'Error al mover la tarjeta' });
-      return { success: false, error: error.message };
+      client.emit('error', { 
+        message: 'Error al mover la tarjeta', 
+        error: error.message 
+      });
+      return { 
+        success: false, 
+        error: error.message 
+      };
     }
   }
 
   @SubscribeMessage('reorderCards')
   async handleReorderCards(
-    @MessageBody() cards: { id: string; order: number }[],
+    @MessageBody() data: { 
+      columnId: string; 
+      cards: { id: string; order: number }[] 
+    },
     @ConnectedSocket() client: Socket,
   ) {
     try {
-      const updatedCards = await this.cardsService.reorderCards(cards);
-      this.server.emit('cardsReordered', updatedCards);
-      return { success: true, data: updatedCards };
+      // Reordenar tarjetas en la columna
+      const reorderedCards = await this.cardsService.reorderCardsInColumn(
+        data.columnId, 
+        data.cards
+      );
+
+      // Emitir evento a todos los clientes
+      this.server.emit('cardsReordered', {
+        columnId: data.columnId,
+        cards: data.cards
+      });
+
+      return { 
+        success: true, 
+        data: reorderedCards 
+      };
     } catch (error) {
-      client.emit('error', { message: 'Error al reordenar las tarjetas' });
-      return { success: false, error: error.message };
+      client.emit('error', { 
+        message: 'Error al reordenar tarjetas', 
+        error: error.message 
+      });
+      return { 
+        success: false, 
+        error: error.message 
+      };
     }
   }
 

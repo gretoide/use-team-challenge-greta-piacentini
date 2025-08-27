@@ -5,6 +5,9 @@ import {
   DragEndEvent,
   DragOverEvent,
   closestCorners,
+  PointerSensor,
+  useSensor,
+  useSensors,
 } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
 import { useEffect } from 'react';
@@ -19,10 +22,15 @@ const socket = io('http://localhost:3000');
 export default function Home() {
   const { columns, setColumns, users, setUsers, moveCard } = useStore();
   
-  console.log('🏠 Estado actual del store:', { 
-    columnsCount: columns?.length || 0,
-    columns 
-  });
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
+  
+
 
   useEffect(() => {
     // Cargar usuarios
@@ -42,7 +50,12 @@ export default function Home() {
     // Escuchar eventos de WebSocket
     socket.on('cardMoved', (data) => {
       toast('Tarjeta movida');
-      moveCard(data.id, data.sourceColumnId, data.targetColumnId, data.order);
+      // Recargar las columnas para mantener sincronización
+      socket.emit('getColumns', {}, (response: any) => {
+        if (response.success) {
+          setColumns(response.data);
+        }
+      });
     });
 
     return () => {
@@ -50,32 +63,100 @@ export default function Home() {
     };
   }, []);
 
+  const handleDragOver = (event: DragOverEvent) => {
+    const { active, over } = event;
+    
+    if (!over) return;
+
+    const activeId = active.id as string;
+    const overId = over.id as string;
+
+    if (activeId === overId) return;
+
+    // Encontrar la columna de origen (donde está la tarjeta actualmente)
+    const sourceColumn = columns.find(col => 
+      col.cards.some(card => card.id === activeId)
+    );
+
+    if (!sourceColumn) return;
+
+    // Determinar la columna de destino
+    let targetColumn = columns.find(col => col.id === overId);
+    
+    // Si overId no es una columna, buscar en qué columna está esa tarjeta
+    if (!targetColumn) {
+      targetColumn = columns.find(col => 
+        col.cards.some(card => card.id === overId)
+      );
+    }
+
+    if (!targetColumn || sourceColumn.id === targetColumn.id) return;
+
+    // Solo actualizar localmente para feedback visual
+    const sourceCardIndex = sourceColumn.cards.findIndex(card => card.id === activeId);
+    if (sourceCardIndex === -1) return;
+
+    const card = sourceColumn.cards[sourceCardIndex];
+    
+    // Calcular nueva posición en la columna de destino
+    let newOrder = targetColumn.cards.length;
+    
+    // Si se está soltando sobre otra tarjeta, insertarse en esa posición
+    const overCardIndex = targetColumn.cards.findIndex(c => c.id === overId);
+    if (overCardIndex !== -1) {
+      newOrder = overCardIndex;
+    }
+
+    // Actualizar store localmente para feedback visual inmediato
+    moveCard(activeId, sourceColumn.id, targetColumn.id, newOrder);
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     
     if (!over) return;
 
-    const activeId = active.id;
-    const overId = over.id;
+    const activeId = active.id as string;
+    const overId = over.id as string;
 
     if (activeId === overId) return;
 
-    const activeColumnId = columns.find(col => 
+    // Encontrar la columna de origen
+    const sourceColumn = columns.find(col => 
       col.cards.some(card => card.id === activeId)
-    )?.id;
+    );
 
-    const overColumnId = columns.find(col => 
-      col.cards.some(card => card.id === overId)
-    )?.id;
+    if (!sourceColumn) return;
 
-    if (!activeColumnId || !overColumnId) return;
+    // Determinar la columna de destino
+    let targetColumn = columns.find(col => col.id === overId);
+    
+    // Si overId no es una columna, buscar en qué columna está esa tarjeta
+    if (!targetColumn) {
+      targetColumn = columns.find(col => 
+        col.cards.some(card => card.id === overId)
+      );
+    }
 
-    socket.emit('moveCard', {
-      id: activeId.toString(),
-      columnId: overColumnId,
-      order: columns.find(col => col.id === overColumnId)
-        ?.cards.findIndex(card => card.id === overId) ?? 0,
-    });
+    if (!targetColumn) return;
+
+    // Calcular el nuevo orden en la columna de destino
+    let newOrder = targetColumn.cards.length;
+    
+    // Si se soltó sobre otra tarjeta, insertarse en esa posición
+    const overCardIndex = targetColumn.cards.findIndex(c => c.id === overId);
+    if (overCardIndex !== -1) {
+      newOrder = overCardIndex;
+    }
+
+    // Solo enviar al backend si hay un cambio real de columna
+    if (sourceColumn.id !== targetColumn.id) {
+      socket.emit('moveCard', {
+        id: activeId,
+        columnId: targetColumn.id,
+        order: newOrder
+      });
+    }
   };
 
   return (
@@ -86,6 +167,8 @@ export default function Home() {
       </div>
       
       <DndContext
+        sensors={sensors}
+        onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
         collisionDetection={closestCorners}
       >

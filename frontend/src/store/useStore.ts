@@ -49,26 +49,37 @@ export const useStore = create<KanbanStore>((set) => ({
         ),
       })),
     })),
-  moveCard: (cardId, sourceColumnId, targetColumnId, newOrder) =>
+  moveCard: (cardId: string, sourceColumnId: string, targetColumnId: string, newOrder: number) =>
     set((state) => {
-      const card = state.columns
-        .find((col) => col.id === sourceColumnId)
-        ?.cards.find((c) => c.id === cardId);
+      // Clonar las columnas para no mutar el estado directamente
+      const updatedColumns = state.columns.map(column => ({...column}));
 
-      if (!card) return state;
+      // Encontrar las columnas de origen y destino
+      const sourceColumnIndex = updatedColumns.findIndex(col => col.id === sourceColumnId);
+      const targetColumnIndex = updatedColumns.findIndex(col => col.id === targetColumnId);
 
-      const updatedCard = { ...card, columnId: targetColumnId, order: newOrder };
+      if (sourceColumnIndex === -1 || targetColumnIndex === -1) return state;
 
-      return {
-        columns: state.columns.map((column) => ({
-          ...column,
-          cards:
-            column.id === sourceColumnId
-              ? column.cards.filter((c) => c.id !== cardId)
-              : column.id === targetColumnId
-              ? [...column.cards, updatedCard].sort((a, b) => a.order - b.order)
-              : column.cards,
-        })),
-      };
+      // Encontrar la tarjeta a mover
+      const cardIndex = updatedColumns[sourceColumnIndex].cards.findIndex(card => card.id === cardId);
+      if (cardIndex === -1) return state;
+
+      // Extraer la tarjeta de la columna de origen
+      const [movedCard] = updatedColumns[sourceColumnIndex].cards.splice(cardIndex, 1);
+
+      // Actualizar la columna de la tarjeta
+      movedCard.columnId = targetColumnId;
+
+      // Insertar la tarjeta en la columna de destino en la posición correcta
+      updatedColumns[targetColumnIndex].cards.splice(newOrder, 0, movedCard);
+
+      // Reordenar las tarjetas en ambas columnas
+      updatedColumns[sourceColumnIndex].cards = updatedColumns[sourceColumnIndex].cards
+        .map((card, index) => ({...card, order: index}));
+      
+      updatedColumns[targetColumnIndex].cards = updatedColumns[targetColumnIndex].cards
+        .map((card, index) => ({...card, order: index}));
+
+      return { columns: updatedColumns };
     }),
 }));

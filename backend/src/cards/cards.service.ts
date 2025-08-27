@@ -55,14 +55,30 @@ export class CardsService {
     });
   }
 
-  async moveCard(id: string, columnId: string, order: number) {
+  async moveCard(cardId: string, newColumnId: string, newOrder: number) {
+    // Actualizar la tarjeta con su nueva columna y orden
     return this.prisma.card.update({
-      where: { id },
+      where: { id: cardId },
       data: {
-        columnId,
-        order
-      },
+        columnId: newColumnId,
+        order: newOrder
+      }
     });
+  }
+
+  async reorderCardsInColumn(columnId: string, cardUpdates: { id: string; order: number }[]) {
+    // Actualizar el orden de las tarjetas en una columna
+    const updates = cardUpdates.map(update => 
+      this.prisma.card.update({
+        where: { id: update.id },
+        data: { 
+          order: update.order,
+          columnId: columnId  // Asegurar que la tarjeta pertenezca a la columna correcta
+        }
+      })
+    );
+
+    return Promise.all(updates);
   }
 
   async reorderCards(cards: { id: string; order: number }[]) {
