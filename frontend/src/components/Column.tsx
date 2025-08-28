@@ -24,14 +24,14 @@ export const Column = ({ id, title, cards, onCardClick }: ColumnProps) => {
   return (
     <div className="col">
       <div className="card h-100">
-        <div className="card-header">
-          <h5 className="mb-0">{title}</h5>
+        <div className="card-header py-2">
+          <h6 className="mb-0 small">{title}</h6>
         </div>
         <div
           ref={setNodeRef}
-          className={`card-body ${isOver ? 'bg-light border-2 border-primary' : ''}`}
+          className={`card-body py-2 ${isOver ? 'bg-light border-2 border-primary' : ''}`}
           style={{ 
-            minHeight: '500px',
+            minHeight: '400px',
             transition: 'all 0.2s ease',
           }}
         >
@@ -51,7 +51,7 @@ export const Column = ({ id, title, cards, onCardClick }: ColumnProps) => {
                 />
               ))
             ) : (
-              <div className="text-muted">No hay tarjetas</div>
+              <div className="text-muted small">No hay tarjetas</div>
             )}
           </SortableContext>
           

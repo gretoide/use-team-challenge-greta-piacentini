@@ -38,20 +38,20 @@ export const Card = ({ id, title, content, userId, onCardClick }: CardProps) => 
       className={`card mb-2 ${isOwnCard ? 'border-primary' : ''}`}
     >
             <div 
-        className="card-body"
+        className="card-body py-2"
         onClick={(e) => {
           e.stopPropagation();
           onCardClick({ id, title, content, userId });
         }}
         style={{ cursor: 'pointer' }}
       >
-        <h6 className="card-title">{title}</h6>
-        <p className="card-text small text-truncate">{content}</p>
+        <h6 className="card-title small mb-1">{title}</h6>
+        <p className="card-text small text-truncate mb-2">{content}</p>
         <div className="d-flex justify-content-between align-items-center">
           <div>
             {cardAuthor && (
               <span
-                className={`badge ${isOwnCard ? 'bg-primary' : 'bg-secondary'}`}
+                className={`badge small ${isOwnCard ? 'bg-primary' : 'bg-secondary'}`}
               >
                 {cardAuthor.name}
               </span>
@@ -65,7 +65,7 @@ export const Card = ({ id, title, content, userId, onCardClick }: CardProps) => 
             }}
             title="Ver detalles"
           >
-            <i className="bi bi-eye"></i>
+            <i className="bi bi-eye small"></i>
           </button>
         </div>
       </div>
