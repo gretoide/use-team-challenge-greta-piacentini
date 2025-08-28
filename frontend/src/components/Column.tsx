@@ -4,6 +4,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { Card } from './Card';
+import { AddCardButton } from './AddCardButton';
 
 interface ColumnProps {
   id: string;
@@ -19,8 +20,6 @@ interface ColumnProps {
 
 export const Column = ({ id, title, cards, onCardClick }: ColumnProps) => {
   const { setNodeRef, isOver } = useDroppable({ id });
-
-
 
   return (
     <div className="col">
@@ -55,6 +54,11 @@ export const Column = ({ id, title, cards, onCardClick }: ColumnProps) => {
               <div className="text-muted">No hay tarjetas</div>
             )}
           </SortableContext>
+          
+          <AddCardButton 
+            columnId={id} 
+            columnOrder={cards.length} 
+          />
         </div>
       </div>
     </div>

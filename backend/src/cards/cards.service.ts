@@ -3,22 +3,44 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateCardDto } from './dto/create-card.dto';
 import { UpdateCardDto } from './dto/update-card.dto';
 import { Card, Prisma } from '@prisma/client';
+import { MongoClient, ObjectId } from 'mongodb';
 
 @Injectable()
 export class CardsService {
   constructor(private prisma: PrismaService) {}
 
-  async create(createCardDto: CreateCardDto): Promise<Card> {
+  async create(createCardDto: CreateCardDto): Promise<any> {
     try {
-      return await this.prisma.card.create({
-        data: {
+      // Usar MongoDB directamente
+      const uri = process.env.DATABASE_URL || "mongodb://localhost:27017/my-kanban-db";
+      const client = new MongoClient(uri);
+
+      try {
+        await client.connect();
+        const db = client.db();
+        const collection = db.collection('Card');
+
+        const result = await collection.insertOne({
+          _id: new ObjectId(),
           title: createCardDto.title,
           content: createCardDto.content || '',
           order: createCardDto.order,
           columnId: createCardDto.columnId,
           userId: createCardDto.userId,
-        },
-      });
+        });
+
+        // Convertir el resultado al formato esperado
+        return {
+          id: result.insertedId.toString(),
+          title: createCardDto.title,
+          content: createCardDto.content || '',
+          order: createCardDto.order,
+          columnId: createCardDto.columnId,
+          userId: createCardDto.userId,
+        };
+      } finally {
+        await client.close();
+      }
     } catch (error) {
       console.error('Error al crear la tarjeta:', error);
       throw new Error('No se pudo crear la tarjeta');
@@ -39,23 +61,9 @@ export class CardsService {
 
   async update(id: string, updateCardDto: UpdateCardDto): Promise<Card> {
     try {
-      // Verificar que la tarjeta existe
-      const exists = await this.prisma.card.findUnique({
-        where: { id }
-      });
-
-      if (!exists) {
-        throw new Error('Tarjeta no encontrada');
-      }
-
-      // Actualizar solo los campos proporcionados
-      const updateData: Prisma.CardUpdateInput = {};
-      if (updateCardDto.title !== undefined) updateData.title = updateCardDto.title;
-      if (updateCardDto.content !== undefined) updateData.content = updateCardDto.content;
-
       return await this.prisma.card.update({
         where: { id },
-        data: updateData
+        data: updateCardDto
       });
     } catch (error) {
       console.error('Error al actualizar la tarjeta:', error);
