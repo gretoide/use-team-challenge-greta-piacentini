@@ -65,11 +65,12 @@ export class CardsGateway {
 
   @SubscribeMessage('moveCard')
   async handleMoveCard(
-    @MessageBody() data: { id: string; columnId: string; order: number },
+    @MessageBody() data: { id: string; columnId: string; order: number; userId: string },
   ) {
     try {
       const card = await this.cardsService.moveCard(data.id, data.columnId, data.order);
-      this.server.emit('cardMoved', { ...data, userId: card.userId });
+      // Usar el userId del usuario que realizó el movimiento
+      this.server.emit('cardMoved', { ...data, userId: data.userId });
       return { success: true, data: card };
     } catch (error) {
       return { success: false, error: 'Error al mover la tarjeta: ' + error.message };

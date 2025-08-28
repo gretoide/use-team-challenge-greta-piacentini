@@ -171,7 +171,8 @@ export default function Home() {
     socket.emit('moveCard', {
       id: cardId,
       columnId: targetColumn.id,
-      order: newOrder
+      order: newOrder,
+      userId: currentUser.id // Agregar el userId del usuario actual
     }, (response: any) => {
       if (!response.success) {
         toast.error('Error al mover la tarjeta');

@@ -76,7 +76,7 @@ export const CardSidebar = ({ card, onClose, onEdit, onDelete }: CardSidebarProp
             </div>
 
             <div className="d-flex gap-2 justify-content-end mt-5">
-              {onEdit && (
+              {onEdit && isOwnCard && (
                 <button
                   type="button"
                   className="btn btn-outline-primary"
@@ -87,7 +87,7 @@ export const CardSidebar = ({ card, onClose, onEdit, onDelete }: CardSidebarProp
                   Editar
                 </button>
               )}
-              {onDelete && (
+              {onDelete && isOwnCard && (
                 <button
                   type="button"
                   className="btn btn-outline-danger"
