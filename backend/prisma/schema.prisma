@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  previewFeatures = ["mongodb"]
 }
 
 datasource db {
@@ -24,6 +25,6 @@ model Card {
   title    String
   content  String?
   order    Int
-  columnId String @db.ObjectId  // Campo requerido
-  userId   String @db.ObjectId  // Campo requerido
+  columnId String @db.ObjectId
+  userId   String @db.ObjectId
 }

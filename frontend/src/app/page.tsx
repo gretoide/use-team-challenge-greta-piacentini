@@ -56,24 +56,25 @@ export default function Home() {
 
     // Escuchar eventos de WebSocket
     socket.on('cardMoved', (data) => {
-      toast('Tarjeta movida');
-      // Recargar las columnas para mantener sincronización
       socket.emit('getColumns', {}, (response: any) => {
         if (response.success) {
           setColumns(response.data);
-        } else {
-          toast.error('Error al actualizar las columnas');
+          toast.success('Tarjeta movida');
         }
       });
     });
 
-    socket.on('error', (error) => {
-      toast.error(error.message || 'Error en la operación');
+    socket.on('cardUpdated', () => {
+      socket.emit('getColumns', {}, (response: any) => {
+        if (response.success) {
+          setColumns(response.data);
+        }
+      });
     });
 
     return () => {
       socket.off('cardMoved');
-      socket.off('error');
+      socket.off('cardUpdated');
     };
   }, []);
 
@@ -217,13 +218,9 @@ export default function Home() {
           }, (response: any) => {
             if (response.success) {
               toast.success('Tarjeta actualizada');
-              socket.emit('getColumns', {}, (columnsResponse: any) => {
-                if (columnsResponse.success) {
-                  setColumns(columnsResponse.data);
-                }
-              });
+              setSelectedCard(null);
             } else {
-              toast.error('Error al actualizar la tarjeta');
+              toast.error(response.error);
             }
           });
         }}
