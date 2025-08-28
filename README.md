@@ -112,12 +112,6 @@ cd frontend
 npm run dev
 ```
 
-## 🌐 Acceso a la Aplicación
-
-- **Frontend**: http://localhost:3001
-- **Backend**: http://localhost:3000
-- **MongoDB**: localhost:27017
-
 ## 🎮 Cómo Usar la Aplicación
 
 ### 1. **Seleccionar Usuario**
@@ -130,7 +124,7 @@ npm run dev
 - Selecciona un usuario antes de crear
 
 ### 3. **Mover Tarjetas**
-- **Arrastra** usando el icono ⋮⋮ en la esquina superior derecha de cada tarjeta
+- **Arrastra** haciendo click sostenido sobre cada tarjeta
 - **Suelta** en la columna deseada
 - Los cambios se sincronizan en tiempo real
 
