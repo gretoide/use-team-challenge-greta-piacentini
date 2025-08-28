@@ -21,7 +21,7 @@ export class CardsGateway {
   ) {
     try {
       const card = await this.cardsService.create(createCardDto);
-      this.server.emit('cardCreated', card);
+      this.server.emit('cardCreated', { ...card, userId: createCardDto.userId });
       return { success: true, data: card };
     } catch (error) {
       return { success: false, error: 'Error al crear la tarjeta: ' + error.message };
@@ -35,7 +35,7 @@ export class CardsGateway {
     try {
       const { id, ...updateData } = data;
       const card = await this.cardsService.update(id, updateData);
-      this.server.emit('cardUpdated', card);
+      this.server.emit('cardUpdated', { ...card, userId: card.userId });
       return { success: true, data: card };
     } catch (error) {
       return { success: false, error: 'Error al actualizar la tarjeta: ' + error.message };
@@ -47,8 +47,12 @@ export class CardsGateway {
     @MessageBody() data: { id: string },
   ) {
     try {
+      const card = await this.cardsService.findOne(data.id);
+      if (!card) {
+        throw new Error('Tarjeta no encontrada');
+      }
       await this.cardsService.remove(data.id);
-      this.server.emit('cardDeleted', data.id);
+      this.server.emit('cardDeleted', { id: data.id, userId: card.userId });
       return { success: true };
     } catch (error) {
       return { success: false, error: 'Error al eliminar la tarjeta: ' + error.message };
@@ -61,7 +65,7 @@ export class CardsGateway {
   ) {
     try {
       const card = await this.cardsService.moveCard(data.id, data.columnId, data.order);
-      this.server.emit('cardMoved', data);
+      this.server.emit('cardMoved', { ...data, userId: card.userId });
       return { success: true, data: card };
     } catch (error) {
       return { success: false, error: 'Error al mover la tarjeta: ' + error.message };

@@ -45,7 +45,12 @@ export const useStore = create<KanbanStore>((set) => ({
   users: [defaultUser],     // Lista inicial con el usuario por defecto
   columns: [],
   setCurrentUser: (user) => set({ currentUser: user }),
-  setUsers: (users) => set({ users }),
+  setUsers: (users) => {
+    // Asegurarse de que el usuario por defecto esté en la lista
+    const hasDefaultUser = users.some(user => user.id === defaultUser.id);
+    const updatedUsers = hasDefaultUser ? users : [defaultUser, ...users];
+    set({ users: updatedUsers });
+  },
   setColumns: (columns) => set({ columns }),
   updateCard: (updatedCard) =>
     set((state) => ({

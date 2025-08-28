@@ -21,7 +21,7 @@ import { CardSidebar } from '../components/CardSidebar';
 const socket = io('http://localhost:3000');
 
 export default function Home() {
-  const { columns, setColumns, users, setUsers, moveCard } = useStore();
+  const { columns, setColumns, setUsers, moveCard, currentUser } = useStore();
   const [selectedCard, setSelectedCard] = useState<{
     id: string;
     title: string;
@@ -40,6 +40,7 @@ export default function Home() {
 
 
   useEffect(() => {
+    if (!currentUser) return;
     // Cargar usuarios
     socket.emit('getUsers', {}, (response: any) => {
       if (response.success) {
@@ -55,37 +56,50 @@ export default function Home() {
     });
 
     // Escuchar eventos de WebSocket
-    socket.on('cardMoved', (data) => {
+    socket.on('cardMoved', (data: { userId: string }) => {
       socket.emit('getColumns', {}, (response: any) => {
         if (response.success) {
           setColumns(response.data);
-          toast.success('Tarjeta movida');
+          // Solo mostrar toast si el usuario actual movió la tarjeta
+          if (data.userId === currentUser.id) {
+            toast.success('Tarjeta movida');
+          }
         }
       });
     });
 
-    socket.on('cardCreated', (data) => {
+    socket.on('cardCreated', (data: { userId: string }) => {
       socket.emit('getColumns', {}, (response: any) => {
         if (response.success) {
           setColumns(response.data);
-          toast.success('Tarjeta creada');
+          // Solo mostrar toast si el usuario actual creó la tarjeta
+          if (data.userId === currentUser.id) {
+            toast.success('Tarjeta creada');
+          }
         }
       });
     });
 
-    socket.on('cardUpdated', () => {
+    socket.on('cardUpdated', (data: { userId: string }) => {
       socket.emit('getColumns', {}, (response: any) => {
         if (response.success) {
           setColumns(response.data);
+          // Solo mostrar toast si el usuario actual actualizó la tarjeta
+          if (data.userId === currentUser.id) {
+            toast.success('Tarjeta actualizada');
+          }
         }
       });
     });
 
-    socket.on('cardDeleted', () => {
+    socket.on('cardDeleted', (data: { userId: string }) => {
       socket.emit('getColumns', {}, (response: any) => {
         if (response.success) {
           setColumns(response.data);
-          toast.success('Tarjeta eliminada');
+          // Solo mostrar toast si el usuario actual eliminó la tarjeta
+          if (data.userId === currentUser.id) {
+            toast.success('Tarjeta eliminada');
+          }
         }
       });
     });
@@ -96,7 +110,7 @@ export default function Home() {
       socket.off('cardUpdated');
       socket.off('cardDeleted');
     };
-  }, []);
+  }, [currentUser]);
 
   const handleDragOver = (event: DragOverEvent) => {
     const { active, over } = event;
@@ -199,7 +213,7 @@ export default function Home() {
 
   return (
     <>
-      <Toaster richColors position="top-right" />
+      <Toaster richColors position="top-center" />
       <main className="container-fluid py-4">
         <div className="d-flex justify-content-between align-items-center mb-4">
           <h1>My G.Kanban</h1>

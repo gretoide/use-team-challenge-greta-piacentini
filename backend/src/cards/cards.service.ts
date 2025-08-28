@@ -47,6 +47,17 @@ export class CardsService {
     }
   }
 
+  async findOne(id: string): Promise<Card | null> {
+    try {
+      return await this.prisma.card.findUnique({
+        where: { id }
+      });
+    } catch (error) {
+      console.error('Error al buscar la tarjeta:', error);
+      throw new Error('No se pudo encontrar la tarjeta');
+    }
+  }
+
   async findAll(columnId: string): Promise<Card[]> {
     try {
       return await this.prisma.card.findMany({
