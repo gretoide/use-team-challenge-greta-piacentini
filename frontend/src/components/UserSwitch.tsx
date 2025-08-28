@@ -5,6 +5,8 @@ export const UserSwitch = () => {
   const currentUser = useStore((state) => state.currentUser);
   const setCurrentUser = useStore((state) => state.setCurrentUser);
 
+  if (!currentUser) return null; // No mostrar nada hasta que tengamos un usuario
+
   return (
     <div className="dropdown">
       <button

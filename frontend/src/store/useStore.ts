@@ -23,7 +23,7 @@ interface Column {
 }
 
 interface KanbanStore {
-  currentUser: User;  // Ya no es nullable
+  currentUser: User | null;  // Puede ser null hasta que se carguen los usuarios
   users: User[];
   columns: Column[];
   setCurrentUser: (user: User) => void;
@@ -33,23 +33,19 @@ interface KanbanStore {
   moveCard: (cardId: string, sourceColumnId: string, targetColumnId: string, newOrder: number) => void;
 }
 
-// Usuario por defecto
-const defaultUser: User = {
-  id: '1',
-  name: 'Usuario 1',
-  email: 'user1@test.com'
-};
-
 export const useStore = create<KanbanStore>((set) => ({
-  currentUser: defaultUser,  // Inicializado con el usuario por defecto
-  users: [defaultUser],     // Lista inicial con el usuario por defecto
+  currentUser: null,  // Inicialmente null
+  users: [],         // Inicialmente vacío
   columns: [],
   setCurrentUser: (user) => set({ currentUser: user }),
   setUsers: (users) => {
-    // Asegurarse de que el usuario por defecto esté en la lista
-    const hasDefaultUser = users.some(user => user.id === defaultUser.id);
-    const updatedUsers = hasDefaultUser ? users : [defaultUser, ...users];
-    set({ users: updatedUsers });
+    if (users.length > 0) {
+      set((state) => ({
+        users,
+        // Si no hay usuario seleccionado, usar el primero de la lista
+        currentUser: state.currentUser || users[0]
+      }));
+    }
   },
   setColumns: (columns) => set({ columns }),
   updateCard: (updatedCard) =>

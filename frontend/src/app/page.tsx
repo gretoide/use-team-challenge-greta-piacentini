@@ -37,11 +37,8 @@ export default function Home() {
     })
   );
   
-
-
   useEffect(() => {
-    if (!currentUser) return;
-    // Cargar usuarios
+    // Cargar usuarios primero
     socket.emit('getUsers', {}, (response: any) => {
       if (response.success) {
         setUsers(response.data);
@@ -61,7 +58,7 @@ export default function Home() {
         if (response.success) {
           setColumns(response.data);
           // Solo mostrar toast si el usuario actual movió la tarjeta
-          if (data.userId === currentUser.id) {
+          if (currentUser && data.userId === currentUser.id) {
             toast.success('Tarjeta movida');
           }
         }
@@ -73,7 +70,7 @@ export default function Home() {
         if (response.success) {
           setColumns(response.data);
           // Solo mostrar toast si el usuario actual creó la tarjeta
-          if (data.userId === currentUser.id) {
+          if (currentUser && data.userId === currentUser.id) {
             toast.success('Tarjeta creada');
           }
         }
@@ -85,7 +82,7 @@ export default function Home() {
         if (response.success) {
           setColumns(response.data);
           // Solo mostrar toast si el usuario actual actualizó la tarjeta
-          if (data.userId === currentUser.id) {
+          if (currentUser && data.userId === currentUser.id) {
             toast.success('Tarjeta actualizada');
           }
         }
@@ -97,7 +94,7 @@ export default function Home() {
         if (response.success) {
           setColumns(response.data);
           // Solo mostrar toast si el usuario actual eliminó la tarjeta
-          if (data.userId === currentUser.id) {
+          if (currentUser && data.userId === currentUser.id) {
             toast.success('Tarjeta eliminada');
           }
         }
@@ -110,7 +107,15 @@ export default function Home() {
       socket.off('cardUpdated');
       socket.off('cardDeleted');
     };
-  }, [currentUser]);
+  }, []); // No depender de currentUser ya que puede ser null inicialmente
+
+  if (!currentUser) {
+    return (
+      <div className="container-fluid py-4">
+        <h1>Cargando...</h1>
+      </div>
+    );
+  }
 
   const handleDragOver = (event: DragOverEvent) => {
     const { active, over } = event;
@@ -228,13 +233,13 @@ export default function Home() {
       >
         <div className="row row-cols-1 row-cols-md-3 g-4">
           {columns.map((column) => (
-                               <Column
-                    key={column.id}
-                    id={column.id}
-                    title={column.title}
-                    cards={column.cards}
-                    onCardClick={setSelectedCard}
-                  />
+            <Column
+              key={column.id}
+              id={column.id}
+              title={column.title}
+              cards={column.cards}
+              onCardClick={setSelectedCard}
+            />
           ))}
         </div>
       </DndContext>
