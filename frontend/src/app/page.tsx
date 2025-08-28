@@ -64,6 +64,15 @@ export default function Home() {
       });
     });
 
+    socket.on('cardCreated', (data) => {
+      socket.emit('getColumns', {}, (response: any) => {
+        if (response.success) {
+          setColumns(response.data);
+          toast.success('Tarjeta creada');
+        }
+      });
+    });
+
     socket.on('cardUpdated', () => {
       socket.emit('getColumns', {}, (response: any) => {
         if (response.success) {
@@ -74,6 +83,7 @@ export default function Home() {
 
     return () => {
       socket.off('cardMoved');
+      socket.off('cardCreated');
       socket.off('cardUpdated');
     };
   }, []);

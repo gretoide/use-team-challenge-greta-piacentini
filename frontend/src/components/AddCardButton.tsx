@@ -31,8 +31,7 @@ export const AddCardButton = ({ columnId, columnOrder }: AddCardButtonProps) => 
       order: columnOrder // Se agregará al final de la columna
     }, (response: any) => {
       if (response.success) {
-        toast.success('Tarjeta creada');
-        // Limpiar formulario
+        // La notificación y actualización se manejan en page.tsx
         setTitle('');
         setContent('');
         setIsAdding(false);
