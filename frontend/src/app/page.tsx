@@ -53,53 +53,22 @@ export default function Home() {
     });
 
     // Escuchar eventos de WebSocket
-    socket.on('cardMoved', (data: { userId: string }) => {
+    const handleCardEvent = (eventName: string) => (data: { userId: string }) => {
+      console.log(`${eventName} event received:`, data); // Para depuración
       socket.emit('getColumns', {}, (response: any) => {
         if (response.success) {
           setColumns(response.data);
-          // Solo mostrar toast si el usuario actual movió la tarjeta
           if (currentUser && data.userId === currentUser.id) {
-            toast.success('Tarjeta movida');
+            toast.success(`Tarjeta ${eventName.replace('card', '').toLowerCase()}`);
           }
         }
       });
-    });
+    };
 
-    socket.on('cardCreated', (data: { userId: string }) => {
-      socket.emit('getColumns', {}, (response: any) => {
-        if (response.success) {
-          setColumns(response.data);
-          // Solo mostrar toast si el usuario actual creó la tarjeta
-          if (currentUser && data.userId === currentUser.id) {
-            toast.success('Tarjeta creada');
-          }
-        }
-      });
-    });
-
-    socket.on('cardUpdated', (data: { userId: string }) => {
-      socket.emit('getColumns', {}, (response: any) => {
-        if (response.success) {
-          setColumns(response.data);
-          // Solo mostrar toast si el usuario actual actualizó la tarjeta
-          if (currentUser && data.userId === currentUser.id) {
-            toast.success('Tarjeta actualizada');
-          }
-        }
-      });
-    });
-
-    socket.on('cardDeleted', (data: { userId: string }) => {
-      socket.emit('getColumns', {}, (response: any) => {
-        if (response.success) {
-          setColumns(response.data);
-          // Solo mostrar toast si el usuario actual eliminó la tarjeta
-          if (currentUser && data.userId === currentUser.id) {
-            toast.success('Tarjeta eliminada');
-          }
-        }
-      });
-    });
+    socket.on('cardMoved', handleCardEvent('Movida'));
+    socket.on('cardCreated', handleCardEvent('Creada'));
+    socket.on('cardUpdated', handleCardEvent('Actualizada'));
+    socket.on('cardDeleted', handleCardEvent('Eliminada'));
 
     return () => {
       socket.off('cardMoved');
@@ -107,7 +76,7 @@ export default function Home() {
       socket.off('cardUpdated');
       socket.off('cardDeleted');
     };
-  }, []); // No depender de currentUser ya que puede ser null inicialmente
+  }, [currentUser]); // Agregar currentUser como dependencia
 
   if (!currentUser) {
     return (
@@ -256,19 +225,18 @@ export default function Home() {
             userId: updatedCard.userId
           }, (response: any) => {
             if (response.success) {
-              toast.success('Tarjeta actualizada');
               setSelectedCard(null);
             } else {
-              toast.error(response.error);
+              toast.error(response.error || 'Error al actualizar la tarjeta');
             }
           });
         }}
         onDelete={(cardId) => {
           socket.emit('deleteCard', { id: cardId }, (response: any) => {
             if (response.success) {
-              setSelectedCard(null); // Cerrar el sidebar
+              setSelectedCard(null);
             } else {
-              toast.error('Error al eliminar la tarjeta');
+              toast.error(response.error || 'Error al eliminar la tarjeta');
             }
           });
         }}

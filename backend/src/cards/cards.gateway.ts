@@ -21,7 +21,11 @@ export class CardsGateway {
   ) {
     try {
       const card = await this.cardsService.create(createCardDto);
-      this.server.emit('cardCreated', { ...card, userId: createCardDto.userId });
+      // Asegurarnos de que el userId se envía en el evento
+      this.server.emit('cardCreated', { 
+        ...card,
+        userId: createCardDto.userId
+      });
       return { success: true, data: card };
     } catch (error) {
       return { success: false, error: 'Error al crear la tarjeta: ' + error.message };
@@ -53,7 +57,7 @@ export class CardsGateway {
       }
       await this.cardsService.remove(data.id);
       this.server.emit('cardDeleted', { id: data.id, userId: card.userId });
-      return { success: true };
+      return { success: true, data: { id: data.id, userId: card.userId } };
     } catch (error) {
       return { success: false, error: 'Error al eliminar la tarjeta: ' + error.message };
     }
