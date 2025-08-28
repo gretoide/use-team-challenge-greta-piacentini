@@ -56,14 +56,68 @@ export class CardsService {
   }
 
   async moveCard(cardId: string, newColumnId: string, newOrder: number) {
-    // Actualizar la tarjeta con su nueva columna y orden
-    return this.prisma.card.update({
-      where: { id: cardId },
-      data: {
-        columnId: newColumnId,
-        order: newOrder
-      }
+    try {
+      // 1. Obtener la tarjeta y verificar que existe
+      const card = await this.prisma.card.findUnique({
+        where: { id: cardId }
+      });
+
+      if (!card) throw new Error('Tarjeta no encontrada');
+
+      // 2. Mover todas las tarjetas en una sola transacción
+      await this.prisma.$transaction(async (prisma) => {
+        // 2.1 Mover las tarjetas en la columna destino para hacer espacio
+        await prisma.card.updateMany({
+          where: {
+            columnId: newColumnId,
+            order: {
+              gte: newOrder
+            }
+          },
+          data: {
+            order: {
+              increment: 1
+            }
+          }
+        });
+
+        // 2.2 Mover la tarjeta a su nueva posición
+        await prisma.card.update({
+          where: { id: cardId },
+          data: {
+            columnId: newColumnId,
+            order: newOrder
+          }
+        });
+
+        // 2.3 Reordenar las tarjetas en la columna origen
+        const sourceCards = await prisma.card.findMany({
+          where: { 
+            columnId: card.columnId,
+            id: { not: cardId }
+          },
+          orderBy: { order: 'asc' }
+        });
+
+        // Actualizar el orden de las tarjetas restantes
+        for (const [index, card] of sourceCards.entries()) {
+          await prisma.card.update({
+            where: { id: card.id },
+            data: { order: index }
+          });
+        }
+      }, {
+        timeout: 10000 // 10 segundos de timeout para la transacción
+      });
+
+      // Retornar la tarjeta actualizada
+    return this.prisma.card.findUnique({
+      where: { id: cardId }
     });
+    } catch (error) {
+      console.error('Error al mover la tarjeta:', error);
+      throw error;
+    }
   }
 
   async reorderCardsInColumn(columnId: string, cardUpdates: { id: string; order: number }[]) {

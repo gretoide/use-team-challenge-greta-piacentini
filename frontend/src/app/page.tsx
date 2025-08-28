@@ -10,17 +10,24 @@ import {
   useSensors,
 } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { io } from "socket.io-client";
 import { Toaster, toast } from 'sonner';
 import { useStore } from '../store/useStore';
 import { Column } from '../components/Column';
 import { UserSwitch } from '../components/UserSwitch';
+import { CardSidebar } from '../components/CardSidebar';
 
 const socket = io('http://localhost:3000');
 
 export default function Home() {
   const { columns, setColumns, users, setUsers, moveCard } = useStore();
+  const [selectedCard, setSelectedCard] = useState<{
+    id: string;
+    title: string;
+    content: string;
+    userId: string;
+  } | null>(null);
   
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -54,12 +61,19 @@ export default function Home() {
       socket.emit('getColumns', {}, (response: any) => {
         if (response.success) {
           setColumns(response.data);
+        } else {
+          toast.error('Error al actualizar las columnas');
         }
       });
     });
 
+    socket.on('error', (error) => {
+      toast.error(error.message || 'Error en la operación');
+    });
+
     return () => {
       socket.off('cardMoved');
+      socket.off('error');
     };
   }, []);
 
@@ -116,22 +130,11 @@ export default function Home() {
     
     if (!over) return;
 
-    const activeId = active.id as string;
+    const cardId = active.id as string;
     const overId = over.id as string;
 
-    if (activeId === overId) return;
-
-    // Encontrar la columna de origen
-    const sourceColumn = columns.find(col => 
-      col.cards.some(card => card.id === activeId)
-    );
-
-    if (!sourceColumn) return;
-
-    // Determinar la columna de destino
+    // Encontrar la columna destino (puede ser el ID de la columna o una tarjeta en esa columna)
     let targetColumn = columns.find(col => col.id === overId);
-    
-    // Si overId no es una columna, buscar en qué columna está esa tarjeta
     if (!targetColumn) {
       targetColumn = columns.find(col => 
         col.cards.some(card => card.id === overId)
@@ -140,23 +143,37 @@ export default function Home() {
 
     if (!targetColumn) return;
 
-    // Calcular el nuevo orden en la columna de destino
+    // Calcular el nuevo orden
     let newOrder = targetColumn.cards.length;
-    
-    // Si se soltó sobre otra tarjeta, insertarse en esa posición
     const overCardIndex = targetColumn.cards.findIndex(c => c.id === overId);
     if (overCardIndex !== -1) {
       newOrder = overCardIndex;
     }
 
-    // Solo enviar al backend si hay un cambio real de columna
-    if (sourceColumn.id !== targetColumn.id) {
-      socket.emit('moveCard', {
-        id: activeId,
-        columnId: targetColumn.id,
-        order: newOrder
-      });
+    // 1. Actualizar estado local para feedback inmediato
+    const sourceColumn = columns.find(col => 
+      col.cards.some(card => card.id === cardId)
+    );
+    if (sourceColumn) {
+      moveCard(cardId, sourceColumn.id, targetColumn.id, newOrder);
     }
+
+    // 2. Enviar al backend para persistir el cambio
+    socket.emit('moveCard', {
+      id: cardId,
+      columnId: targetColumn.id,
+      order: newOrder
+    }, (response: any) => {
+      if (!response.success) {
+        toast.error('Error al mover la tarjeta');
+        // 3. Si falla, recargar estado desde el backend
+        socket.emit('getColumns', {}, (response: any) => {
+          if (response.success) {
+            setColumns(response.data);
+          }
+        });
+      }
+    });
   };
 
   return (
@@ -174,17 +191,19 @@ export default function Home() {
       >
         <div className="row row-cols-1 row-cols-md-3 g-4">
           {columns.map((column) => (
-            <Column
-              key={column.id}
-              id={column.id}
-              title={column.title}
-              cards={column.cards}
-            />
+                               <Column
+                    key={column.id}
+                    id={column.id}
+                    title={column.title}
+                    cards={column.cards}
+                    onCardClick={setSelectedCard}
+                  />
           ))}
         </div>
       </DndContext>
       
       <Toaster position="top-right" />
+      <CardSidebar card={selectedCard} onClose={() => setSelectedCard(null)} />
     </main>
   );
 }

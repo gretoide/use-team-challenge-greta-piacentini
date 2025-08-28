@@ -7,9 +7,10 @@ interface CardProps {
   title: string;
   content: string;
   userId: string;
+  onCardClick: (card: { id: string; title: string; content: string; userId: string }) => void;
 }
 
-export const Card = ({ id, title, content, userId }: CardProps) => {
+export const Card = ({ id, title, content, userId, onCardClick }: CardProps) => {
   const currentUser = useStore((state) => state.currentUser);
   const users = useStore((state) => state.users);
   
@@ -42,12 +43,19 @@ export const Card = ({ id, title, content, userId }: CardProps) => {
       {...listeners}
       className={`card mb-2 ${isOwnCard ? 'border-primary' : ''}`}
     >
-      <div className="card-body">
+            <div 
+        className="card-body"
+        onClick={(e) => {
+          e.stopPropagation();
+          onCardClick({ id, title, content, userId });
+        }}
+        style={{ cursor: 'pointer' }}
+      >
         <h6 className="card-title">{title}</h6>
-        <p className="card-text small">{content}</p>
+        <p className="card-text small text-truncate">{content}</p>
         <div className="d-flex justify-content-between align-items-center">
           {cardAuthor && (
-            <span 
+            <span
               className={`badge ${isOwnCard ? 'bg-primary' : 'bg-secondary'}`}
             >
               {cardAuthor.name}

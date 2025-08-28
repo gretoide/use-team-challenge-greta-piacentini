@@ -8,10 +8,16 @@ import { Card } from './Card';
 interface ColumnProps {
   id: string;
   title: string;
-  cards: any[];
+  cards: Array<{
+    id: string;
+    title: string;
+    content: string;
+    userId: string;
+  }>;
+  onCardClick: (card: { id: string; title: string; content: string; userId: string }) => void;
 }
 
-export const Column = ({ id, title, cards }: ColumnProps) => {
+export const Column = ({ id, title, cards, onCardClick }: ColumnProps) => {
   const { setNodeRef, isOver } = useDroppable({ id });
 
 
@@ -42,6 +48,7 @@ export const Column = ({ id, title, cards }: ColumnProps) => {
                   title={card.title}
                   content={card.content}
                   userId={card.userId}
+                  onCardClick={onCardClick}
                 />
               ))
             ) : (
