@@ -13,13 +13,13 @@ export const UserSwitch = () => {
         data-bs-toggle="dropdown"
         aria-expanded="false"
       >
-        {currentUser?.name || 'Seleccionar Usuario'}
+        {currentUser.name}
       </button>
-      <ul className="dropdown-menu">
+      <ul className="dropdown-menu dropdown-menu-end">
         {users.map((user) => (
           <li key={user.id}>
             <button
-              className="dropdown-item"
+              className={`dropdown-item ${currentUser.id === user.id ? 'active' : ''}`}
               onClick={() => setCurrentUser(user)}
             >
               {user.name}

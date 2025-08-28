@@ -18,10 +18,6 @@ export const AddCardButton = ({ columnId, columnOrder }: AddCardButtonProps) => 
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentUser) {
-      toast.error('Por favor selecciona un usuario primero');
-      return;
-    }
 
     socket.emit('createCard', {
       title: title.trim(),
@@ -41,24 +37,7 @@ export const AddCardButton = ({ columnId, columnOrder }: AddCardButtonProps) => 
     });
   };
 
-  if (!isAdding) {
-    return (
-      <button
-        className="btn btn-outline-primary btn-sm w-100 mt-2"
-        onClick={() => {
-          if (!currentUser) {
-            toast.error('Por favor selecciona un usuario primero');
-            return;
-          }
-          setIsAdding(true);
-        }}
-      >
-        <i className="bi bi-plus-lg"></i> Agregar tarjeta
-      </button>
-    );
-  }
-
-  return (
+  return isAdding ? (
     <form onSubmit={handleSubmit} className="mt-2">
       <div className="card">
         <div className="card-body">
@@ -97,5 +76,12 @@ export const AddCardButton = ({ columnId, columnOrder }: AddCardButtonProps) => 
         </div>
       </div>
     </form>
+  ) : (
+    <button
+      className="btn btn-outline-primary btn-sm w-100 mt-2"
+      onClick={() => setIsAdding(true)}
+    >
+      <i className="bi bi-plus-lg"></i> Agregar tarjeta
+    </button>
   );
 };

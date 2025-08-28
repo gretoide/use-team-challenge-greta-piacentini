@@ -81,10 +81,20 @@ export default function Home() {
       });
     });
 
+    socket.on('cardDeleted', () => {
+      socket.emit('getColumns', {}, (response: any) => {
+        if (response.success) {
+          setColumns(response.data);
+          toast.success('Tarjeta eliminada');
+        }
+      });
+    });
+
     return () => {
       socket.off('cardMoved');
       socket.off('cardCreated');
       socket.off('cardUpdated');
+      socket.off('cardDeleted');
     };
   }, []);
 
@@ -237,12 +247,7 @@ export default function Home() {
         onDelete={(cardId) => {
           socket.emit('deleteCard', { id: cardId }, (response: any) => {
             if (response.success) {
-              toast.success('Tarjeta eliminada');
-              socket.emit('getColumns', {}, (columnsResponse: any) => {
-                if (columnsResponse.success) {
-                  setColumns(columnsResponse.data);
-                }
-              });
+              setSelectedCard(null); // Cerrar el sidebar
             } else {
               toast.error('Error al eliminar la tarjeta');
             }
