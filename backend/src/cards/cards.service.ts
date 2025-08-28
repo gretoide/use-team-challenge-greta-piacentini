@@ -35,18 +35,34 @@ export class CardsService {
   }
 
   async update(id: string, updateCardDto: UpdateCardDto) {
-    const updateData: any = {};
-    
-    if (updateCardDto.title !== undefined) updateData.title = updateCardDto.title;
-    if (updateCardDto.content !== undefined) updateData.content = updateCardDto.content;
-    if (updateCardDto.order !== undefined) updateData.order = updateCardDto.order;
-    if (updateCardDto.columnId !== undefined) updateData.columnId = updateCardDto.columnId;
-    if (updateCardDto.userId !== undefined) updateData.userId = updateCardDto.userId;
+    try {
+      // Verificar que la tarjeta existe
+      const card = await this.prisma.card.findUnique({
+        where: { id }
+      });
 
-    return this.prisma.card.update({
-      where: { id },
-      data: updateData,
-    });
+      if (!card) {
+        throw new Error('Tarjeta no encontrada');
+      }
+
+      // Construir objeto de actualización solo con los campos proporcionados
+      const updateData: Partial<UpdateCardDto> = {};
+      
+      if (updateCardDto.title !== undefined) updateData.title = updateCardDto.title;
+      if (updateCardDto.content !== undefined) updateData.content = updateCardDto.content;
+      if (updateCardDto.order !== undefined) updateData.order = updateCardDto.order;
+      if (updateCardDto.columnId !== undefined) updateData.columnId = updateCardDto.columnId;
+      if (updateCardDto.userId !== undefined) updateData.userId = updateCardDto.userId;
+
+      // Actualizar la tarjeta
+      return this.prisma.card.update({
+        where: { id },
+        data: updateData,
+      });
+    } catch (error) {
+      console.error('Error al actualizar la tarjeta:', error);
+      throw error;
+    }
   }
 
   async remove(id: string) {

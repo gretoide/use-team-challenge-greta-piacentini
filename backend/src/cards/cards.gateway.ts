@@ -33,15 +33,23 @@ export class CardsGateway {
 
   @SubscribeMessage('updateCard')
   async handleUpdateCard(
-    @MessageBody() updateCardDto: UpdateCardDto,
+    @MessageBody() data: { id: string } & UpdateCardDto,
     @ConnectedSocket() client: Socket,
   ) {
     try {
-      const card = await this.cardsService.update(updateCardDto.id, updateCardDto);
+      const { id, ...updateData } = data;
+      const card = await this.cardsService.update(id, updateData);
+      
+      // Emitir el evento a todos los clientes
       this.server.emit('cardUpdated', card);
+      
       return { success: true, data: card };
     } catch (error) {
-      client.emit('error', { message: 'Error al actualizar la tarjeta' });
+      console.error('Error al actualizar la tarjeta:', error);
+      client.emit('error', { 
+        message: 'Error al actualizar la tarjeta',
+        details: error.message 
+      });
       return { success: false, error: error.message };
     }
   }

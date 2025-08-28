@@ -177,11 +177,13 @@ export default function Home() {
   };
 
   return (
-    <main className="container-fluid py-4">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h1>My G.Kanban</h1>
-        <UserSwitch />
-      </div>
+    <>
+      <Toaster richColors position="top-right" />
+      <main className="container-fluid py-4">
+        <div className="d-flex justify-content-between align-items-center mb-4">
+          <h1>My G.Kanban</h1>
+          <UserSwitch />
+        </div>
       
       <DndContext
         sensors={sensors}
@@ -202,8 +204,45 @@ export default function Home() {
         </div>
       </DndContext>
       
-      <Toaster position="top-right" />
-      <CardSidebar card={selectedCard} onClose={() => setSelectedCard(null)} />
+
+      <CardSidebar 
+        card={selectedCard} 
+        onClose={() => setSelectedCard(null)}
+        onEdit={(updatedCard) => {
+          socket.emit('updateCard', {
+            id: updatedCard.id,
+            title: updatedCard.title,
+            content: updatedCard.content,
+            userId: updatedCard.userId
+          }, (response: any) => {
+            if (response.success) {
+              toast.success('Tarjeta actualizada');
+              socket.emit('getColumns', {}, (columnsResponse: any) => {
+                if (columnsResponse.success) {
+                  setColumns(columnsResponse.data);
+                }
+              });
+            } else {
+              toast.error('Error al actualizar la tarjeta');
+            }
+          });
+        }}
+        onDelete={(cardId) => {
+          socket.emit('deleteCard', { id: cardId }, (response: any) => {
+            if (response.success) {
+              toast.success('Tarjeta eliminada');
+              socket.emit('getColumns', {}, (columnsResponse: any) => {
+                if (columnsResponse.success) {
+                  setColumns(columnsResponse.data);
+                }
+              });
+            } else {
+              toast.error('Error al eliminar la tarjeta');
+            }
+          });
+        }}
+      />
     </main>
+    </>
   );
 }

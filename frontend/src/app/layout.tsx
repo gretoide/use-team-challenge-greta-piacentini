@@ -3,6 +3,7 @@
 import { Providers } from './providers';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './globals.css';
+import 'bootstrap-icons/font/bootstrap-icons.css';
 
 export default function RootLayout({
   children,
