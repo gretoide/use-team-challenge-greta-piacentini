@@ -52,26 +52,18 @@ cd backend
 # Instalar dependencias
 npm install
 
-# Crear archivo .env
-cp .env.example .env
 ```
 
-**Configurar variables de entorno (.env):**
-```env
-DATABASE_URL="mongodb://localhost:27017/my-kanban-db"
-PORT=3000
+### Configurar variables de entorno (.env):
+Crear archivo .env para configurar variables de entorno
+
+**Generar cliente de Prisma**
+```bash
+npx prisma generate
 ```
 
 ### 3. Configurar la Base de Datos
 
-**Opción A: MongoDB Local**
-```bash
-# Iniciar MongoDB (Windows)
-"C:\Program Files\MongoDB\Server\6.0\bin\mongod.exe"
-
-# O si tienes MongoDB como servicio
-net start MongoDB
-```
 ### 4. Ejecutar el Seed de la Base de Datos
 
 ```bash
