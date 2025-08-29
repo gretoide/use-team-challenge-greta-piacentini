@@ -55,7 +55,7 @@ npm install
 ```
 
 ### Configurar variables de entorno (.env):
-Crear archivo .env para configurar variables de entorno
+Crear un archivo .env en la carpeta backend/ con las variables necesarias.
 
 **Generar cliente de Prisma**
 ```bash
